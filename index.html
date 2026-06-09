@@ -857,7 +857,7 @@ canvas.addEventListener("touchend",ev=>{
 
 /* quick card panel */
 const panel=document.getElementById("panel"),panelBody=document.getElementById("panelBody");
-function select(nd){selNode=nd;computeFocus(nd);renderPanel(nd);panel.classList.add("open");if(MOBILE){tviewY=-H*0.24;centerOn(nd);}ping(300+(nd.deg%7)*45);}
+function select(nd){selNode=nd;computeFocus(nd);renderPanel(nd);panel.classList.add("open");if(MOBILE){tviewY=-H*0.24;centerOn(nd);}}
 function deselect(){selNode=null;if(!hoverNode)focusSet=null;panel.classList.remove("open");tviewY=0;}
 document.getElementById("close").onclick=deselect;
 const SYM=["bandmate","peer","collaborated","rivals","bebop circle","co-founded","recorded with","played with"];
@@ -1002,9 +1002,9 @@ function initAudio(){
   actx=new AC();
   masterGain=actx.createGain();masterGain.gain.value=0;masterGain.connect(actx.destination);
   const lp=actx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=600;lp.Q.value=0.5;lp.connect(masterGain);
-  [55,82.41,110,164.81].forEach((f,i)=>{
+  [[55,0.045],[82.41,0.10],[110,0.075],[164.81,0.055]].forEach(([f,gg],i)=>{
     const o=actx.createOscillator();o.type=i%2?"sine":"triangle";o.frequency.value=f;
-    const g=actx.createGain();g.gain.value=0.13/(i+1);
+    const g=actx.createGain();g.gain.value=gg;
     const lfo=actx.createOscillator();lfo.frequency.value=0.05+0.03*i;const lg=actx.createGain();lg.gain.value=2;lfo.connect(lg);lg.connect(o.detune);lfo.start();
     o.connect(g);g.connect(lp);o.start();
   });
