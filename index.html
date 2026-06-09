@@ -105,6 +105,7 @@
   .bmeta{font-size:13px;color:var(--muted)}
   .rr{pointer-events:auto;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:var(--soft);font-size:12.5px;padding:8px 14px;border-radius:999px;cursor:pointer;transition:border-color .2s,color .2s}
   .rr:hover{border-color:var(--gold);color:var(--ink)}
+  .rr.on{border-color:var(--gold);color:var(--gold)}
   .instr{pointer-events:auto;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:var(--soft);font-size:12.5px;padding:8px 12px;border-radius:999px;cursor:pointer;outline:none}
   .instr:focus{border-color:var(--gold)}
   .instr option{background:#15121a;color:var(--ink)}
@@ -146,6 +147,7 @@
   </div>
   <button class="rr" id="rrBtn">Reading room</button>
   <button class="rr" id="fitBtn">Fit to screen</button>
+  <button class="rr" id="soundBtn" aria-label="Toggle ambient sound">Sound</button>
   <select class="instr" id="instr" aria-label="Filter by instrument"><option value="">All instruments</option></select>
   <div class="search">
     <input id="q" type="text" placeholder="Find a musician…" autocomplete="off" />
@@ -715,6 +717,7 @@ let yaw=0,pitch=0,tyaw=null,tpitch=0,vyaw=0.0012,vpitch=0,zoom=1,tzoom=1,tick=0,
 const CAM=760;
 const MOBILE=(typeof window!=="undefined"&&window.matchMedia&&window.matchMedia("(max-width:700px)").matches)||false;
 const BLURK=MOBILE?0.5:1;
+let actx=null,masterGain=null,whooshGain=null,whooshFilter=null,soundOn=false;
 let pointer={x:0,y:0,down:false,moved:false};
 const stars=[];for(let i=0;i<240;i++){const u=Math.random(),v=Math.random(),th=Math.acos(2*u-1),ph=2*Math.PI*v;stars.push({x:Math.sin(th)*Math.cos(ph),y:Math.sin(th)*Math.sin(ph),z:Math.cos(th),r:Math.random()*1.1+0.25,tw:Math.random()*6.28});}
 
@@ -807,6 +810,7 @@ function loop(){
     pitch=Math.max(-1.3,Math.min(1.3,pitch));
   }
   zoom+=(tzoom-zoom)*0.12;viewY+=(tviewY-viewY)*0.12;
+  if(whooshGain){const spd=Math.min(1,(Math.abs(vyaw)+Math.abs(vpitch))*7),tg=soundOn?spd*0.22:0;whooshGain.gain.value+=(tg-whooshGain.gain.value)*0.12;if(whooshFilter)whooshFilter.frequency.value=300+spd*1700;}
   NODES.forEach(nd=>{nd.hl+=(((nd===hoverNode||nd===selNode)?1:0)-nd.hl)*0.16;});
   if(!pageOpen)step();
   draw();requestAnimationFrame(loop);
@@ -853,7 +857,7 @@ canvas.addEventListener("touchend",ev=>{
 
 /* quick card panel */
 const panel=document.getElementById("panel"),panelBody=document.getElementById("panelBody");
-function select(nd){selNode=nd;computeFocus(nd);renderPanel(nd);panel.classList.add("open");if(MOBILE){tviewY=-H*0.24;centerOn(nd);}}
+function select(nd){selNode=nd;computeFocus(nd);renderPanel(nd);panel.classList.add("open");if(MOBILE){tviewY=-H*0.24;centerOn(nd);}ping(300+(nd.deg%7)*45);}
 function deselect(){selNode=null;if(!hoverNode)focusSet=null;panel.classList.remove("open");tviewY=0;}
 document.getElementById("close").onclick=deselect;
 const SYM=["bandmate","peer","collaborated","rivals","bebop circle","co-founded","recorded with","played with"];
@@ -990,6 +994,44 @@ document.addEventListener("click",ev=>{if(!q.parentNode.contains(ev.target))sugg
 
 const spreadEl=document.getElementById("spread");
 if(spreadEl){spreadEl.value=spread;spreadEl.oninput=()=>{spread=parseFloat(spreadEl.value);alpha=Math.max(alpha,0.75);};}
+
+/* ----------  AMBIENT SOUND (synthesized)  ---------- */
+function initAudio(){
+  if(actx)return;
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  actx=new AC();
+  masterGain=actx.createGain();masterGain.gain.value=0;masterGain.connect(actx.destination);
+  const lp=actx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=600;lp.Q.value=0.5;lp.connect(masterGain);
+  [55,82.41,110,164.81].forEach((f,i)=>{
+    const o=actx.createOscillator();o.type=i%2?"sine":"triangle";o.frequency.value=f;
+    const g=actx.createGain();g.gain.value=0.13/(i+1);
+    const lfo=actx.createOscillator();lfo.frequency.value=0.05+0.03*i;const lg=actx.createGain();lg.gain.value=2;lfo.connect(lg);lg.connect(o.detune);lfo.start();
+    o.connect(g);g.connect(lp);o.start();
+  });
+  const flfo=actx.createOscillator();flfo.frequency.value=0.03;const flg=actx.createGain();flg.gain.value=220;flfo.connect(flg);flg.connect(lp.frequency);flfo.start();
+  const n=Math.floor(actx.sampleRate*2),buf=actx.createBuffer(1,n,actx.sampleRate),d=buf.getChannelData(0);
+  let last=0;for(let i=0;i<n;i++){const w=Math.random()*2-1;last=(last+0.02*w)/1.02;d[i]=last*3;}
+  const noise=actx.createBufferSource();noise.buffer=buf;noise.loop=true;
+  whooshFilter=actx.createBiquadFilter();whooshFilter.type="bandpass";whooshFilter.frequency.value=500;whooshFilter.Q.value=0.6;
+  whooshGain=actx.createGain();whooshGain.gain.value=0;
+  noise.connect(whooshFilter);whooshFilter.connect(whooshGain);whooshGain.connect(masterGain);noise.start();
+}
+function ping(freq){
+  if(!actx||!soundOn||!masterGain)return;
+  const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=freq||440;
+  o.connect(g);g.connect(masterGain);const t=actx.currentTime;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.1,t+0.012);g.gain.exponentialRampToValueAtTime(0.0008,t+0.9);
+  o.start(t);o.stop(t+0.95);
+}
+const soundBtn=document.getElementById("soundBtn");
+if(soundBtn)soundBtn.onclick=()=>{
+  initAudio();if(!actx)return;
+  if(actx.state==="suspended")actx.resume();
+  soundOn=!soundOn;
+  soundBtn.classList.toggle("on",soundOn);
+  soundBtn.textContent=soundOn?"Sound ◉":"Sound";
+  const t=actx.currentTime;masterGain.gain.cancelScheduledValues(t);masterGain.gain.setValueAtTime(masterGain.gain.value,t);masterGain.gain.linearRampToValueAtTime(soundOn?0.5:0,t+0.6);
+};
 
 function fitView(){let R=1;for(const nd of NODES){if(!visible(nd))continue;R=Math.max(R,Math.hypot(nd.x,nd.y,nd.z));}tzoom=Math.max(0.3,Math.min(2.4,(Math.min(W,H)*0.46)/R));tyaw=null;}
 const fitBtn=document.getElementById("fitBtn");if(fitBtn)fitBtn.onclick=fitView;
