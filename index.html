@@ -41,6 +41,8 @@
   .spread{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:9px 16px;backdrop-filter:blur(8px)}
   .spread span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
   .spread input[type=range]{width:150px;accent-color:var(--gold);cursor:pointer}
+  .clipnote{position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:9;background:var(--panel);border:1px solid rgba(224,177,90,.4);color:var(--gold);font-size:12.5px;padding:7px 16px;border-radius:999px;backdrop-filter:blur(8px);opacity:0;transition:opacity .3s;pointer-events:none;max-width:80%;text-align:center}
+  .clipnote.show{opacity:1}
 
   .panel{position:fixed;top:0;right:0;height:100%;width:360px;background:var(--panel);border-left:1px solid rgba(255,255,255,.1);backdrop-filter:blur(14px);transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:8;padding:26px 26px 30px;overflow-y:auto}
   .panel.open{transform:translateX(0)}
@@ -93,6 +95,11 @@
   .dtag{font-size:10.5px;color:var(--muted);margin-left:8px;border:1px solid rgba(255,255,255,.14);border-radius:4px;padding:1px 6px;text-transform:uppercase;letter-spacing:.04em}
   .moreBtn{margin-top:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);color:var(--soft);font-size:13px;padding:9px 16px;border-radius:10px;cursor:pointer}
   .moreBtn:hover{border-color:var(--gold);color:var(--ink)}
+  .dmain{display:inline}
+  .svc{display:inline-flex;gap:6px;margin-left:10px;vertical-align:middle}
+  .svc a{font-size:11px;color:var(--muted);border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:1px 7px;text-decoration:none;transition:color .2s,border-color .2s}
+  .svc a:hover{color:var(--gold);border-color:var(--gold)}
+  @media(max-width:700px){.drow .dmain{display:flex;flex-direction:column;align-items:flex-start;gap:5px}.svc{margin-left:0}}
   .reslist{display:flex;flex-direction:column;gap:8px;max-width:680px}
   .reslink{display:flex;align-items:baseline;gap:12px;text-decoration:none;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;transition:border-color .2s,background .2s}
   .reslink:hover{border-color:var(--gold);background:rgba(224,177,90,.1)}
@@ -158,6 +165,7 @@
 <div class="legend" id="legend"></div>
 <div class="hint"><b>Hover</b> to trace ties &middot; <b>Click</b> for a card &middot; <b>Double-click</b> for the full page<br><b>Drag</b> to spin the globe &middot; <b>Scroll</b> to zoom</div>
 <div class="spread"><span>Tight</span><input id="spread" type="range" min="0.7" max="3.4" step="0.05" value="1.5" aria-label="Spread the network out" /><span>Spread</span></div>
+<div id="clipnote" class="clipnote"></div>
 
 <aside class="panel" id="panel"><button class="close" id="close">&times;</button><div id="panelBody"></div></aside>
 <div class="page" id="page"><div class="page-inner" id="pageInner"></div></div>
@@ -857,8 +865,8 @@ canvas.addEventListener("touchend",ev=>{
 
 /* quick card panel */
 const panel=document.getElementById("panel"),panelBody=document.getElementById("panelBody");
-function select(nd){selNode=nd;computeFocus(nd);renderPanel(nd);panel.classList.add("open");if(MOBILE){tviewY=-H*0.24;centerOn(nd);}}
-function deselect(){selNode=null;if(!hoverNode)focusSet=null;panel.classList.remove("open");tviewY=0;}
+function select(nd){selNode=nd;computeFocus(nd);renderPanel(nd);panel.classList.add("open");if(MOBILE){tviewY=-H*0.24;centerOn(nd);}playClip(nd);}
+function deselect(){selNode=null;if(!hoverNode)focusSet=null;panel.classList.remove("open");tviewY=0;if(clip)clip.pause();clipNote("");}
 document.getElementById("close").onclick=deselect;
 const SYM=["bandmate","peer","collaborated","rivals","bebop circle","co-founded","recorded with","played with"];
 function relWord(ed,nd){const dir=ed.a===nd.id;if(SYM.includes(ed.rel))return ed.rel;if(ed.rel==="mentored")return dir?"mentored":"mentored by";if(ed.rel==="influenced")return dir?"influenced":"influenced by";if(ed.rel==="influenced by")return dir?"influenced by":"influenced";if(ed.rel==="arranged for")return dir?"arranged for":"used arranger";return ed.rel;}
@@ -933,18 +941,19 @@ function resolveAndFetch(nd){
   return mbFetch(`https://musicbrainz.org/ws/2/artist?query=${encodeURIComponent('artist:"'+nd.name+'"')}&fmt=json&limit=8`).then(d=>{const list=d.artists||[];if(!list.length)throw new Error("no match");const best=list.find(a=>a.name.toLowerCase()===nd.name.toLowerCase())||list[0];return getRGs(best.id);});
 }
 function dtag(i){const t=(i.secondary&&i.secondary.length)?i.secondary.join(", "):(i.primary&&i.primary!=="Album"?i.primary:"");return t?`<span class="dtag">${t}</span>`:"";}
+function svc(q){const e=encodeURIComponent(q.replace(/\s+/g," ").trim());return `<span class="svc"><a href="https://open.spotify.com/search/${e}" target="_blank" rel="noopener">Spotify</a><a href="https://music.apple.com/us/search?term=${e}" target="_blank" rel="noopener">Apple</a><a href="https://www.youtube.com/results?search_query=${e}" target="_blank" rel="noopener">YouTube</a></span>`;}
 function renderDisco(box,nd,items){
   const sorted=items.slice().sort((a,b)=>(a.year||"9999").localeCompare(b.year||"9999"));
   const isMain=i=>i.primary==="Album"&&!i.secondary.includes("Compilation");
   const main=sorted.filter(isMain),other=sorted.filter(i=>!isMain(i));
-  const row=i=>`<div class="drow"><span class="dyear">${i.year||"—"}</span><span><span class="dtitle">${i.title}</span>${dtag(i)}</span></div>`;
+  const row=i=>`<div class="drow"><span class="dyear">${i.year||"—"}</span><span class="dmain"><span class="dtitle">${i.title}</span>${dtag(i)}${svc(nd.name+" "+i.title)}</span></div>`;
   let html=`<div class="discometa">${items.length} releases · via MusicBrainz</div><div class="disco">${main.map(row).join("")||'<div class="dnote">No studio albums listed.</div>'}</div>`;
   if(other.length)html+=`<button class="moreBtn" id="moreBtn">Show ${other.length} more — EPs, live &amp; compilations</button><div class="disco" id="otherDisco" style="display:none">${other.map(row).join("")}</div>`;
   box.innerHTML=html;
   const mb=document.getElementById("moreBtn");
   if(mb)mb.onclick=()=>{const o=document.getElementById("otherDisco"),sh=o.style.display==="none";o.style.display=sh?"":"none";mb.innerHTML=sh?"Hide EPs, live &amp; compilations":`Show ${other.length} more — EPs, live &amp; compilations`;};
 }
-function renderFallback(box,nd){box.innerHTML=`<div class="discometa">Showing essentials — connect to the internet to load the full discography from MusicBrainz.</div><div class="disco">${(nd.disco||[]).map(d=>`<div class="drow"><span class="dyear">${d[0]}</span><span><span class="dtitle">${d[1]}</span>${d[2]?`<span class="dnote">— ${d[2]}</span>`:""}</span></div>`).join("")}</div>`;}
+function renderFallback(box,nd){box.innerHTML=`<div class="discometa">Showing essentials — connect to the internet to load the full discography from MusicBrainz.</div><div class="disco">${(nd.disco||[]).map(d=>`<div class="drow"><span class="dyear">${d[0]}</span><span class="dmain"><span class="dtitle">${d[1]}</span>${d[2]?`<span class="dnote">— ${d[2]}</span>`:""}${svc(nd.name+" "+d[1])}</span></div>`).join("")}</div>`;}
 function loadDisco(nd){
   const box=document.getElementById("discoBox");if(!box)return;
   const key="jc_disco_"+nd.id;let cached=null;try{cached=JSON.parse(localStorage.getItem(key)||"null");}catch(e){}
@@ -1032,6 +1041,34 @@ if(soundBtn)soundBtn.onclick=()=>{
   soundBtn.textContent=soundOn?"Sound ◉":"Sound";
   const t=actx.currentTime;masterGain.gain.cancelScheduledValues(t);masterGain.gain.setValueAtTime(masterGain.gain.value,t);masterGain.gain.linearRampToValueAtTime(soundOn?0.5:0,t+0.6);
 };
+
+/* ----------  AUDIO PREVIEW CLIPS (Apple/iTunes)  ---------- */
+const clip=(typeof Audio!=="undefined")?new Audio():null;
+let clipFor=null;
+function duck(){if(masterGain&&soundOn&&actx){const t=actx.currentTime;masterGain.gain.cancelScheduledValues(t);masterGain.gain.setValueAtTime(masterGain.gain.value,t);masterGain.gain.linearRampToValueAtTime(0.12,t+0.25);}}
+function unduck(){if(masterGain&&soundOn&&actx){const t=actx.currentTime;masterGain.gain.cancelScheduledValues(t);masterGain.gain.setValueAtTime(masterGain.gain.value,t);masterGain.gain.linearRampToValueAtTime(0.5,t+0.7);}}
+if(clip){clip.addEventListener("ended",unduck);clip.addEventListener("pause",unduck);}
+function clipNote(msg,hold){const el=document.getElementById("clipnote");if(!el)return;clearTimeout(clipNote._t);if(!msg){el.classList.remove("show");return;}el.textContent=msg;el.classList.add("show");clipNote._t=setTimeout(()=>el.classList.remove("show"),hold||2600);}
+function playPreview(url,name){if(!clip)return;if(!url||url==="none"){clipNote("No preview found for "+name);return;}clip.src=url;try{clip.currentTime=0;}catch(e){}duck();const p=clip.play();if(p&&p.catch)p.catch(()=>{clipNote("Tap again to hear "+name);});clipNote("♪  "+name,32000);}
+function itunesLookup(term,cb){
+  if(typeof document==="undefined"||!document.body){cb(null);return;}
+  const id="itcb"+(Math.random()*1e9|0);let done=false;
+  const s=document.createElement("script");
+  function cleanup(){try{delete window[id];}catch(e){window[id]=undefined;}if(s.parentNode)s.parentNode.removeChild(s);}
+  window[id]=data=>{if(done)return;done=true;cleanup();const r=((data&&data.results)||[]).find(x=>x.previewUrl);cb(r?r.previewUrl:"none");};
+  s.onerror=()=>{if(!done){done=true;cleanup();cb(null);}};
+  s.src="https://itunes.apple.com/search?term="+encodeURIComponent(term)+"&media=music&entity=song&attribute=artistTerm&limit=4&callback="+id;
+  document.body.appendChild(s);
+  setTimeout(()=>{if(!done){done=true;cleanup();cb(null);}},6000);
+}
+function playClip(nd){
+  if(!clip)return;
+  clipFor=nd.id;
+  let cached=null;try{cached=localStorage.getItem("jc_clip_"+nd.id);}catch(e){}
+  if(cached!==null){playPreview(cached,nd.name);return;}
+  clipNote("♪  finding "+nd.name+"…",6000);
+  itunesLookup(nd.name,url=>{if(url!==null){try{localStorage.setItem("jc_clip_"+nd.id,url);}catch(e){}}if(clipFor===nd.id)playPreview(url||"none",nd.name);});
+}
 
 function fitView(){let R=1;for(const nd of NODES){if(!visible(nd))continue;R=Math.max(R,Math.hypot(nd.x,nd.y,nd.z));}tzoom=Math.max(0.3,Math.min(2.4,(Math.min(W,H)*0.46)/R));tyaw=null;}
 const fitBtn=document.getElementById("fitBtn");if(fitBtn)fitBtn.onclick=fitView;
