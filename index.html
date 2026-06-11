@@ -80,6 +80,10 @@
   .pavatar{width:104px;height:104px;border-radius:16px;flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:600;color:#0c0a0d}
   .pavatar.hasimg{color:transparent}
   .pavatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .pavcol{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none}
+  .pcredit{font-size:10px;color:var(--muted);text-decoration:none;opacity:0;transition:opacity .3s}
+  .pcredit.show{opacity:1}
+  .pcredit:hover{color:var(--gold)}
   .pheadtext{min-width:0}
   .phead h1{margin:6px 0 6px}
   .page h3{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:40px 0 16px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:10px}
@@ -153,7 +157,7 @@
 
 <div class="topbar">
   <div class="brand">
-    <h1>The Jazz Constellation <span class="ver">v22</span></h1>
+    <h1>The Jazz Constellation <span class="ver">v25</span></h1>
     <div class="tag">An encyclopedia of who shaped whom</div>
   </div>
   <button class="rr" id="rrBtn">Reading room</button>
@@ -409,6 +413,21 @@ n("emily","Emily Remler","contemporary","Guitar","1957–1990 · American","A bl
 n("rosnes","Renee Rosnes","contemporary","Piano · composer","b.1962 · Canadian","A leading post-bop pianist and composer.","A Canadian pianist of harmonic richness who came up with Joe Henderson and Wayne Shorter and leads acclaimed bands of her own.",[["1990","Renee Rosnes",""]]),
 n("nubya","Nubya Garcia","contemporary","Tenor saxophone","b.1991 · British","A leading voice of the new London jazz.","A tenor saxophonist and composer at the heart of the vibrant London scene, blending spiritual jazz with Caribbean and dance influences.",[["2020","Source",""]]),
 n("shabaka","Shabaka Hutchings","contemporary","Tenor sax · reeds","b.1984 · British","The driving force of London's jazz wave.","A saxophonist and bandleader (Sons of Kemet, The Comet Is Coming) whose ferocious, groove-driven music made him a face of Britain's jazz renaissance.",[["2018","Your Queen Is a Reptile (Sons of Kemet)",""]]),
+n("ellis","Ellis Marsalis","modern","Piano · educator","1934–2020 · American","Patriarch and teacher of New Orleans jazz.","A New Orleans pianist of refined modern touch and, above all, the revered teacher who raised the Marsalis brothers and mentored a generation of the city's musicians.",[["1992","Heart of Gold",""]]),
+n("cobham","Billy Cobham","modern","Drums","b.1944 · Panamanian-American","Fusion's thunderous engine.","A drummer of explosive power and technique who, with the Mahavishnu Orchestra and on Miles Davis sessions, helped define jazz-rock fusion.",[["1973","Spectrum",""]]),
+n("airto","Airto Moreira","modern","Percussion · drums","b.1941 · Brazilian","Brazilian rhythm at the heart of fusion.","The percussionist who brought Brazilian color to Miles Davis, Return to Forever, and Weather Report, making hand percussion a fusion staple.",[["1973","Fingers",""]]),
+n("eckstine","Billy Eckstine","bebop","Voice · bandleader","1914–1993 · American","The bandleader who incubated bebop.","A velvet-voiced singer whose 1940s big band — featuring Parker, Gillespie, and Sarah Vaughan — was the cradle in which bebop grew up.",[["1947","Mister B and the Band",""]]),
+n("glennmiller","Glenn Miller","swing","Trombone · bandleader","1904–1944 · American","The most popular sound of the swing era.","A trombonist-bandleader whose precise, romantic reed-led sound made his the best-selling band of the swing era, before he vanished over the Channel in wartime.",[["1939","In the Mood",""],["1941","Chattanooga Choo Choo",""]]),
+n("dorsey","Tommy Dorsey","swing","Trombone · bandleader","1905–1956 · American","'The Sentimental Gentleman of Swing.'","A trombonist of singing tone who led one of the era's great bands and launched a young Frank Sinatra and drummer Buddy Rich.",[["1937","Marie",""]]),
+n("eartha","Eartha Kitt","bebop","Voice","1927–2008 · American","Feline glamour and a purring growl.","A singer and actress of sultry, theatrical style whose worldly, multilingual cabaret-jazz made her an international star.",[["1953","That Bad Eartha",""]]),
+n("dimeola","Al Di Meola","modern","Guitar","b.1954 · American","Blazing speed and Latin fire.","A virtuoso guitarist who rose to fame with Return to Forever and dazzled across fusion, flamenco, and world music.",[["1977","Elegant Gypsy",""]]),
+n("klugh","Earl Klugh","contemporary","Guitar","b.1953 · American","Warm acoustic fingerstyle.","A guitarist of gentle, melodic fingerstyle acoustic playing who became a defining voice of smooth, pop-tinged jazz.",[["1976","Earl Klugh",""]]),
+n("liebman","Dave Liebman","modern","Soprano & tenor sax","b.1946 · American","Coltrane's heir in the electric era.","A searching saxophonist who came up with Miles Davis and Elvin Jones and carried Coltrane's intensity into fusion and beyond.",[["1974","Lookout Farm",""]]),
+n("tomscott","Tom Scott","modern","Saxophone","b.1948 · American","L.A.'s fusion-session ace.","A saxophonist and composer at the center of 1970s Los Angeles jazz-fusion, leader of the L.A. Express and a ubiquitous studio voice.",[["1974","Tom Cat",""]]),
+n("sanborn","David Sanborn","modern","Alto saxophone","1945–2024 · American","The most imitated alto sound of his era.","An altoist of vocal, blues-soaked cry whose sound defined pop-jazz and graced countless records, from Gil Evans to David Bowie.",[["1981","Voyeur",""]]),
+n("evanparker","Evan Parker","free","Saxophone","b.1944 · British","The frontier of solo saxophone.","A British free-improvisation pioneer whose extended techniques — circular breathing, multiphonics — redrew the map of what the saxophone could do.",[["1975","Saxophone Solos",""]]),
+n("bailey","Derek Bailey","free","Guitar","1930–2005 · British","Free improvisation's restless conscience.","A British guitarist who abandoned idiom entirely for pure non-idiomatic improvisation — one of the most radical figures in free music.",[["1971","Solo Guitar",""]]),
+n("brotzmann","Peter Brötzmann","free","Saxophone","1941–2023 · German","European free jazz at full force.","A German saxophonist of ferocious, blasting power whose 'Machine Gun' became a landmark of European free jazz.",[["1968","Machine Gun",""]]),
 ];
 
 const e=(a,b,rel)=>({a,b,rel});
@@ -606,6 +625,21 @@ e("emily","wes","influenced by"),e("emily","jimhall","influenced by"),e("emily",
 e("rosnes","joehen","bandmate"),e("rosnes","barron","influenced by"),e("rosnes","mcbride","peer"),e("shorter","rosnes","bandmate"),
 e("nubya","kamasi","peer"),e("nubya","coltrane","influenced by"),e("nubya","shabaka","peer"),
 e("shabaka","kamasi","peer"),e("shabaka","pharoah","influenced by"),e("shabaka","sunra","influenced by"),
+e("ellis","wynton","mentored"),e("ellis","branford","mentored"),e("ellis","blanchard","mentored"),
+e("mclaughlin","cobham","bandmate"),e("miles","cobham","recorded with"),e("cobham","dejohnette","peer"),
+e("miles","airto","recorded with"),e("corea","airto","bandmate"),e("airto","flora","collaborated"),
+e("eckstine","parker","bandmate"),e("eckstine","dizzy","bandmate"),e("eckstine","vaughan","bandmate"),e("eckstine","hines","bandmate"),
+e("glennmiller","goodman","peer"),e("glennmiller","dorsey","peer"),
+e("dorsey","goodman","peer"),e("dorsey","rich","bandmate"),
+e("eartha","dinah","peer"),e("eartha","vaughan","peer"),
+e("corea","dimeola","bandmate"),e("dimeola","mclaughlin","collaborated"),e("dimeola","stanclarke","bandmate"),
+e("klugh","benson","peer"),e("klugh","wes","influenced by"),
+e("miles","liebman","bandmate"),e("elvin","liebman","bandmate"),e("liebman","coltrane","influenced by"),
+e("tomscott","sanborn","peer"),e("tomscott","brecker","peer"),
+e("sanborn","gil","recorded with"),e("sanborn","parker","influenced by"),
+e("evanparker","bailey","bandmate"),e("evanparker","brotzmann","peer"),e("evanparker","coltrane","influenced by"),
+e("bailey","frisell","influenced"),e("bailey","zorn","collaborated"),
+e("brotzmann","ayler","influenced by"),e("brotzmann","shepp","peer"),
 ];
 
 /* ----------  LIBRARY: biographies & further reading  ---------- */
@@ -689,6 +723,17 @@ const CRITICS=[
 {name:"Geoff Dyer",note:"Novelist; an impressionistic take on jazz",books:[["But Beautiful: A Book About Jazz","1991"]]},
 {name:"Linda Dahl",note:"Historian of women in jazz",books:[["Stormy Weather: The Music and Lives of a Century of Jazzwomen","1984"],["Morning Glory: A Biography of Mary Lou Williams","1999"]]},
 {name:"Sherrie Tucker",note:"Scholar of the all-women bands",books:[["Swing Shift: 'All-Girl' Bands of the 1940s","2000"]]},
+{name:"James Kaplan",note:"Biographer and narrative historian",books:[["3 Shades of Blue: Miles Davis, John Coltrane, Bill Evans, and the Lost Empire of Cool","2024"]]},
+{name:"Ashley Kahn",note:"Chronicler of landmark albums",books:[["Kind of Blue: The Making of the Miles Davis Masterpiece","2000"],["A Love Supreme: The Story of John Coltrane's Signature Album","2002"]]},
+{name:"Gunther Schuller",note:"Composer-musicologist; the deep musical history",books:[["Early Jazz: Its Roots and Musical Development","1968"],["The Swing Era: The Development of Jazz, 1930–1945","1989"]]},
+{name:"Ira Gitler",note:"Critic and oral historian of bebop",books:[["Swing to Bop: An Oral History of the Transition in Jazz in the 1940s","1985"]]},
+{name:"Nat Shapiro & Nat Hentoff",note:"The story told by the musicians themselves",books:[["Hear Me Talkin' to Ya: The Story of Jazz as Told by the Men Who Made It","1955"]]},
+{name:"Scott DeVeaux",note:"Historian of bebop's social world",books:[["The Birth of Bebop: A Social and Musical History","1997"]]},
+{name:"Val Wilmer",note:"Photographer-writer of the new jazz",books:[["As Serious as Your Life: The Story of the New Jazz","1977"]]},
+{name:"George E. Lewis",note:"Composer-scholar of the AACM",books:[["A Power Stronger Than Itself: The AACM and American Experimental Music","2008"]]},
+{name:"Geoffrey C. Ward & Ken Burns",note:"The sweeping popular history",books:[["Jazz: A History of America's Music","2000"]]},
+{name:"Mezz Mezzrow & Bernard Wolfe",note:"A wild memoir of the jazz life",books:[["Really the Blues","1946"]]},
+{name:"Hampton Hawes & Don Asher",note:"A pianist's unflinching memoir",books:[["Raise Up Off Me","1974"]]},
 ];
 
 /* ----------  ENGINE  ---------- */
@@ -894,7 +939,7 @@ function openPage(nd){
   pageInner.innerHTML=`
     <button class="back" id="backBtn"><span>&larr;</span> Back to the constellation</button>
     <div class="phead">
-      <div class="pavatar" id="pavatar" style="background:${era.color}">${mono(nd.name)}</div>
+      <div class="pavcol"><div class="pavatar" id="pavatar" style="background:${era.color}">${mono(nd.name)}</div><a id="pcredit" class="pcredit" target="_blank" rel="noopener"></a></div>
       <div class="pheadtext">
         <span class="pill" style="background:${hexA(era.color,0.18)};color:${era.color}">${era.label}</span>
         <h1>${nd.name}</h1>
@@ -977,12 +1022,12 @@ function loadDisco(nd){
   if(cached&&cached.items){renderDisco(box,nd,cached.items);return;}
   resolveAndFetch(nd).then(items=>{try{localStorage.setItem(key,JSON.stringify({items,ts:Date.now()}));}catch(e){}if(curId===nd.id)renderDisco(box,nd,items);}).catch(()=>{if(curId===nd.id)renderFallback(box,nd);});
 }
-const WIKI={hiromi:"Hiromi (musician)",avishai:"Avishai Cohen (bassist)",russell:"George Russell (composer)",cherry:"Don Cherry (trumpeter)",larryyoung:"Larry Young (musician)",tony:"Tony Williams (drummer)",scoleman:"Steve Coleman",rivers:"Sam Rivers",nelson:"Oliver Nelson",roscoe:"Roscoe Mitchell",powell:"Bud Powell",brown:"Clifford Brown",young:"Lester Young",milt:"Milt Jackson",holland:"Dave Holland",mcbride:"Christian McBride",moran:"Jason Moran",redman:"Joshua Redman",raybrown:"Ray Brown (musician)",chambers:"Paul Chambers",andrewhill:"Andrew Hill (musician)",jjjohnson:"J. J. Johnson",jimhall:"Jim Hall (musician)",jojones:"Jo Jones",hines:"Earl Hines",waller:"Fats Waller",eldridge:"Roy Eldridge",flanagan:"Tommy Flanagan (pianist)"};
+const WIKI={hiromi:"Hiromi (musician)",avishai:"Avishai Cohen (bassist)",russell:"George Russell (composer)",cherry:"Don Cherry (trumpeter)",larryyoung:"Larry Young (musician)",tony:"Tony Williams (drummer)",scoleman:"Steve Coleman",rivers:"Sam Rivers",nelson:"Oliver Nelson",roscoe:"Roscoe Mitchell",powell:"Bud Powell",brown:"Clifford Brown",young:"Lester Young",milt:"Milt Jackson",holland:"Dave Holland",mcbride:"Christian McBride",moran:"Jason Moran",redman:"Joshua Redman",raybrown:"Ray Brown (musician)",chambers:"Paul Chambers",andrewhill:"Andrew Hill (musician)",jjjohnson:"J. J. Johnson",jimhall:"Jim Hall (musician)",jojones:"Jo Jones",hines:"Earl Hines",waller:"Fats Waller",eldridge:"Roy Eldridge",flanagan:"Tommy Flanagan (pianist)",tomscott:"Tom Scott (musician)",bailey:"Derek Bailey (guitarist)",ellis:"Ellis Marsalis Jr.",liebman:"Dave Liebman",sanborn:"David Sanborn",dimeola:"Al Di Meola"};
 function mono(name){const p=name.split(" ").filter(Boolean);return((p[0][0]||"")+(p.length>1?p[p.length-1][0]:"")).toUpperCase();}
 function loadPhoto(nd){
   const av=document.getElementById("pavatar");if(!av)return;
   const key="jc_photo_"+nd.id;let cached=null;try{cached=localStorage.getItem(key);}catch(e){}
-  const set=url=>{if(url&&url!=="none"&&curId===nd.id){const img=new Image();img.alt=nd.name;img.onload=()=>{if(curId===nd.id){av.classList.add("hasimg");av.innerHTML="";av.appendChild(img);}};img.src=url;}};
+  const set=url=>{if(url&&url!=="none"&&curId===nd.id){const img=new Image();img.alt=nd.name;img.onload=()=>{if(curId===nd.id){av.classList.add("hasimg");av.innerHTML="";av.appendChild(img);const cr=document.getElementById("pcredit");if(cr){cr.href="https://en.wikipedia.org/wiki/"+encodeURIComponent(WIKI[nd.id]||nd.name);cr.textContent="Photo: Wikipedia";cr.classList.add("show");}}};img.src=url;}};
   if(cached!==null){set(cached);return;}
   const title=WIKI[nd.id]||nd.name;
   fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`).then(r=>r.ok?r.json():Promise.reject()).then(d=>{const url=(d.type==="standard"&&d.thumbnail&&d.thumbnail.source)?d.thumbnail.source:"none";try{localStorage.setItem(key,url);}catch(e){}set(url);}).catch(()=>{});
