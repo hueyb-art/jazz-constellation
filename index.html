@@ -153,7 +153,7 @@
 
 <div class="topbar">
   <div class="brand">
-    <h1>The Jazz Constellation <span class="ver">v21</span></h1>
+    <h1>The Jazz Constellation <span class="ver">v22</span></h1>
     <div class="tag">An encyclopedia of who shaped whom</div>
   </div>
   <button class="rr" id="rrBtn">Reading room</button>
@@ -1081,7 +1081,18 @@ function jsonpLookup(term,cb){
   setTimeout(()=>{if(!done){done=true;cleanup();cb(null);}},6500);
 }
 function tfetch(u,ms){return Promise.race([fetch(u).then(r=>r.ok?r.json():Promise.reject()),new Promise((_,rej)=>setTimeout(rej,ms))]);}
-function fetchJSON(url){let p=Promise.reject();["","https://corsproxy.io/?url=","https://api.allorigins.win/raw?url=","https://thingproxy.freeboard.io/fetch/"].forEach(px=>{p=p.catch(()=>tfetch(px?px+encodeURIComponent(url):url,3500));});return p;}
+function fetchJSON(url){let p=Promise.reject();["https://jazz-itunes.hueyb.workers.dev/?url=","","https://corsproxy.io/?url=","https://api.allorigins.win/raw?url=","https://thingproxy.freeboard.io/fetch/"].forEach(px=>{p=p.catch(()=>tfetch(px?px+encodeURIComponent(url):url,3500));});return p;}
+function deezerPreview(name,cb){
+  if(typeof document==="undefined"||!document.body){cb(null);return;}
+  const id="dzcb"+(Math.random()*1e9|0);let done=false;
+  const s=document.createElement("script");
+  function cleanup(){try{delete window[id];}catch(e){window[id]=undefined;}if(s.parentNode)s.parentNode.removeChild(s);}
+  window[id]=data=>{if(done)return;done=true;cleanup();const arr=(data&&data.data)||[];const t=arr.find(x=>x&&x.preview);cb(t?t.preview:null);};
+  s.onerror=()=>{if(!done){done=true;cleanup();cb(null);}};
+  s.src="https://api.deezer.com/search?q="+encodeURIComponent(name)+"&limit=8&output=jsonp&callback="+id;
+  document.body.appendChild(s);
+  setTimeout(()=>{if(!done){done=true;cleanup();cb(null);}},6000);
+}
 function itunesLookup(term,cb){
   let done=false;const fin=v=>{if(done)return;done=true;cb(v);};
   if(typeof fetch==="undefined"){jsonpLookup(term,fin);return;}
@@ -1095,11 +1106,15 @@ function playClip(nd){
   let cached=null;try{cached=localStorage.getItem("jc_clip_"+nd.id);}catch(e){}
   if(cached&&cached!=="none"){playPreview(cached,nd.name);return;}
   clipNote("♪  finding "+nd.name+"…",6500);
-  itunesLookup(nd.name,url=>{
+  deezerPreview(nd.name,url=>{
     if(clipFor!==nd.id)return;
-    if(url===null){clipNote("Couldn't load a preview — try again");return;}
-    if(url&&url!=="none"){try{localStorage.setItem("jc_clip_"+nd.id,url);}catch(e){}}
-    playPreview(url,nd.name);
+    if(url){try{localStorage.setItem("jc_clip_"+nd.id,url);}catch(e){}playPreview(url,nd.name);return;}
+    itunesLookup(nd.name,u2=>{
+      if(clipFor!==nd.id)return;
+      if(u2===null){clipNote("Couldn't load a preview — try again");return;}
+      if(u2&&u2!=="none"){try{localStorage.setItem("jc_clip_"+nd.id,u2);}catch(e){}}
+      playPreview(u2,nd.name);
+    });
   });
 }
 
