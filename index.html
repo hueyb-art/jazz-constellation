@@ -818,7 +818,7 @@ function loop(){
     pitch=Math.max(-1.3,Math.min(1.3,pitch));
   }
   zoom+=(tzoom-zoom)*0.12;viewY+=(tviewY-viewY)*0.12;
-  if(whooshGain){const spd=Math.min(1,(Math.abs(vyaw)+Math.abs(vpitch))*7),tg=soundOn?spd*0.22:0;whooshGain.gain.value+=(tg-whooshGain.gain.value)*0.12;if(whooshFilter)whooshFilter.frequency.value=300+spd*1700;}
+  if(whooshGain){const spd=Math.min(1,(Math.abs(vyaw)+Math.abs(vpitch))*7),tg=soundOn?spd*0.34:0;whooshGain.gain.value+=(tg-whooshGain.gain.value)*0.12;if(whooshFilter)whooshFilter.frequency.value=300+spd*1700;}
   NODES.forEach(nd=>{nd.hl+=(((nd===hoverNode||nd===selNode)?1:0)-nd.hl)*0.16;});
   if(!pageOpen)step();
   draw();requestAnimationFrame(loop);
@@ -1010,14 +1010,6 @@ function initAudio(){
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
   actx=new AC();
   masterGain=actx.createGain();masterGain.gain.value=0;masterGain.connect(actx.destination);
-  const lp=actx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=600;lp.Q.value=0.5;lp.connect(masterGain);
-  [[55,0.045],[82.41,0.10],[110,0.075],[164.81,0.055]].forEach(([f,gg],i)=>{
-    const o=actx.createOscillator();o.type=i%2?"sine":"triangle";o.frequency.value=f;
-    const g=actx.createGain();g.gain.value=gg;
-    const lfo=actx.createOscillator();lfo.frequency.value=0.05+0.03*i;const lg=actx.createGain();lg.gain.value=2;lfo.connect(lg);lg.connect(o.detune);lfo.start();
-    o.connect(g);g.connect(lp);o.start();
-  });
-  const flfo=actx.createOscillator();flfo.frequency.value=0.03;const flg=actx.createGain();flg.gain.value=220;flfo.connect(flg);flg.connect(lp.frequency);flfo.start();
   const n=Math.floor(actx.sampleRate*2),buf=actx.createBuffer(1,n,actx.sampleRate),d=buf.getChannelData(0);
   let last=0;for(let i=0;i<n;i++){const w=Math.random()*2-1;last=(last+0.02*w)/1.02;d[i]=last*3;}
   const noise=actx.createBufferSource();noise.buffer=buf;noise.loop=true;
@@ -1050,7 +1042,7 @@ function unduck(){if(masterGain&&soundOn&&actx){const t=actx.currentTime;masterG
 if(clip){clip.addEventListener("ended",unduck);clip.addEventListener("pause",unduck);}
 function clipNote(msg,hold){const el=document.getElementById("clipnote");if(!el)return;clearTimeout(clipNote._t);if(!msg){el.classList.remove("show");return;}el.textContent=msg;el.classList.add("show");clipNote._t=setTimeout(()=>el.classList.remove("show"),hold||2600);}
 function playPreview(url,name){if(!clip)return;if(!url||url==="none"){clipNote("No preview found for "+name);return;}clip.src=url;try{clip.currentTime=0;}catch(e){}duck();const p=clip.play();if(p&&p.catch)p.catch(()=>{clipNote("Tap again to hear "+name);});clipNote("♪  "+name,32000);}
-function itunesLookup(term,cb){
+function jsonpLookup(term,cb){
   if(typeof document==="undefined"||!document.body){cb(null);return;}
   const id="itcb"+(Math.random()*1e9|0);let done=false;
   const s=document.createElement("script");
@@ -1059,15 +1051,28 @@ function itunesLookup(term,cb){
   s.onerror=()=>{if(!done){done=true;cleanup();cb(null);}};
   s.src="https://itunes.apple.com/search?term="+encodeURIComponent(term)+"&media=music&entity=song&attribute=artistTerm&limit=4&callback="+id;
   document.body.appendChild(s);
-  setTimeout(()=>{if(!done){done=true;cleanup();cb(null);}},6000);
+  setTimeout(()=>{if(!done){done=true;cleanup();cb(null);}},6500);
+}
+function itunesLookup(term,cb){
+  let done=false;const fin=v=>{if(done)return;done=true;cb(v);};
+  if(typeof fetch==="undefined"){jsonpLookup(term,fin);return;}
+  fetch("https://itunes.apple.com/search?term="+encodeURIComponent(term)+"&media=music&entity=song&attribute=artistTerm&limit=5")
+    .then(r=>r.ok?r.json():Promise.reject())
+    .then(d=>{const r=((d&&d.results)||[]).find(x=>x.previewUrl);fin(r?r.previewUrl:"none");})
+    .catch(()=>jsonpLookup(term,fin));
 }
 function playClip(nd){
   if(!clip)return;
   clipFor=nd.id;
   let cached=null;try{cached=localStorage.getItem("jc_clip_"+nd.id);}catch(e){}
   if(cached!==null){playPreview(cached,nd.name);return;}
-  clipNote("♪  finding "+nd.name+"…",6000);
-  itunesLookup(nd.name,url=>{if(url!==null){try{localStorage.setItem("jc_clip_"+nd.id,url);}catch(e){}}if(clipFor===nd.id)playPreview(url||"none",nd.name);});
+  clipNote("♪  finding "+nd.name+"…",6500);
+  itunesLookup(nd.name,url=>{
+    if(clipFor!==nd.id)return;
+    if(url===null){clipNote("Couldn't load a preview — try again");return;}
+    try{localStorage.setItem("jc_clip_"+nd.id,url);}catch(e){}
+    playPreview(url,nd.name);
+  });
 }
 
 function fitView(){let R=1;for(const nd of NODES){if(!visible(nd))continue;R=Math.max(R,Math.hypot(nd.x,nd.y,nd.z));}tzoom=Math.max(0.3,Math.min(2.4,(Math.min(W,H)*0.46)/R));tyaw=null;}
